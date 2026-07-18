@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
   :root{
     --black:#0a0a0a;
@@ -523,6 +524,37 @@
   }
   .qv-copylink:hover{color:var(--gold);}
 
+  /* ---------- order form fields ---------- */
+  .form-grid{display:flex;flex-direction:column;gap:18px;}
+  .form-field label{
+    display:block;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-mute);margin-bottom:8px;font-weight:500;
+  }
+  .form-field label .req{color:var(--gold-bright);}
+  .form-field label .opt{text-transform:none;letter-spacing:0;color:#b7b2a8;font-size:11px;}
+  .form-field input,
+  .form-field textarea{
+    width:100%;box-sizing:border-box;
+    padding:13px 15px;border:1px solid var(--line);border-radius:5px;
+    font-family:'Jost',sans-serif;font-size:14.5px;color:var(--black);
+    background:var(--white);transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .form-field textarea{resize:vertical;min-height:76px;}
+  .form-field input::placeholder,
+  .form-field textarea::placeholder{color:#bcb8ae;}
+  .form-field input:focus,
+  .form-field textarea:focus{
+    outline:none;border-color:var(--gold-bright);
+    box-shadow:0 0 0 3px rgba(212,175,55,0.14);
+  }
+  .form-field input:invalid:not(:placeholder-shown){border-color:#c96b6b;}
+  .form-field.has-error input,
+  .form-field.has-error textarea{border-color:#c14b4b;}
+  .field-error{
+    display:none;color:#a83232;font-size:11.5px;margin:7px 2px 0;letter-spacing:0.01em;
+  }
+  .form-field.has-error .field-error{display:block;}
+
   .delivery-option{
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 16px;border:1px solid var(--line);cursor:pointer;
@@ -532,6 +564,22 @@
   .delivery-option.selected{border-color:var(--black);background:var(--ivory);}
   .delivery-option strong{color:var(--gold);font-weight:500;}
   .do-label{display:flex;align-items:center;gap:10px;}
+  .size-pills{display:flex;gap:8px;flex-wrap:wrap;}
+  .size-pill{
+    width:44px;height:44px;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;cursor:pointer;transition:border-color .25s ease, background .25s ease, color .25s ease;
+  }
+  .size-pill:hover{border-color:var(--gold);}
+  .size-pill.selected{background:var(--black);color:var(--white);border-color:var(--black);}
+  .size-pills{display:flex;gap:8px;flex-wrap:wrap;}
+  .size-pill{
+    width:42px;height:42px;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;cursor:pointer;transition:border-color .25s ease, background .25s ease, color .25s ease;
+  }
+  .size-pill:hover{border-color:var(--gold);}
+  .size-pill.selected{background:var(--black);color:var(--white);border-color:var(--black);}
 
   /* ---------- order confirmation modal ---------- */
   .confirm-modal{
@@ -874,6 +922,12 @@
       <div class="qv-colors" id="qvColors"></div>
       <p id="qvColorWarning" style="display:none;color:#a83232;font-size:11.5px;letter-spacing:0.02em;margin:-14px 0 18px;">Veuillez sélectionner une couleur avant de continuer.</p>
 
+      <div id="qvSizeWrap" style="display:none;margin-bottom:20px;">
+        <span class="eyebrow" style="display:block;margin-bottom:10px;">Taille de l'anneau</span>
+        <div class="size-pills" id="qvSizePills"></div>
+        <p id="qvSizeWarning" style="display:none;color:#a83232;font-size:11.5px;margin-top:10px;">Veuillez sélectionner une taille avant de continuer.</p>
+      </div>
+
       <div id="qvLensWrap" style="display:none;margin-bottom:20px;">
         <span class="eyebrow" style="display:block;margin-bottom:10px;">Choisissez votre type de lentilles</span>
         <div style="display:flex;flex-direction:column;gap:10px;">
@@ -887,6 +941,12 @@
           </div>
         </div>
         <p id="qvLensWarning" style="display:none;color:#a83232;font-size:11.5px;margin-top:10px;">Veuillez sélectionner un type de lentilles avant de continuer.</p>
+      </div>
+
+      <div id="qvSizeWrap" style="display:none;margin-bottom:20px;">
+        <span class="eyebrow" style="display:block;margin-bottom:10px;">Taille de l'anneau</span>
+        <div class="size-pills" id="qvSizePills"></div>
+        <p id="qvSizeWarning" style="display:none;color:#a83232;font-size:11.5px;margin-top:10px;">Veuillez sélectionner une taille avant de continuer.</p>
       </div>
       <p class="qv-desc" id="qvDesc">Une pièce SEN LUXE, choisie pour son éclat et son authenticité.</p>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:auto;">
@@ -924,13 +984,27 @@
       <h2 style="margin-bottom:6px;">Votre commande</h2>
       <p style="font-size:12.5px;color:var(--text-mute);margin-bottom:26px;">Sous-total produits : <strong id="orderSubtotal">0 FCFA</strong></p>
 
-      <form id="orderForm" onsubmit="submitOrder(event)">
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <input required name="nom" placeholder="Nom" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="prenom" placeholder="Prénom" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="phone" placeholder="Téléphone" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="address" placeholder="Adresse de livraison" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <textarea name="comment" placeholder="Commentaire (facultatif)" rows="3" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;resize:vertical;"></textarea>
+      <form id="orderForm" onsubmit="submitOrder(event)" novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="ofFullname">Nom et prénom <span class="req">*</span></label>
+            <input required id="ofFullname" name="fullname" type="text" autocomplete="name">
+            <p class="field-error" id="err-fullname"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofPhone">Téléphone <span class="req">*</span></label>
+            <input required id="ofPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" oninput="this.value=this.value.replace(/[^0-9+\s]/g,'')">
+            <p class="field-error" id="err-phone"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofAddress">Adresse de livraison <span class="req">*</span></label>
+            <input required id="ofAddress" name="address" type="text" autocomplete="address-line1">
+            <p class="field-error" id="err-address"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofComment">Commentaire <span class="opt">(facultatif)</span></label>
+            <textarea id="ofComment" name="comment" rows="4"></textarea>
+          </div>
         </div>
 
         <div style="margin-top:26px;">
@@ -983,7 +1057,7 @@
 /* ================== PRODUCTS — chargés automatiquement depuis l'export CSV ================== */
 /* Chaque produit du CSV contient déjà toutes ses images (regroupées automatiquement
    par la fiche produit / ses variations) : aucune association manuelle n'est faite ici. */
-const PRODUCTS = [{"id": "p116", "name": "Figaro + Rope Chain Combo", "cat": "Maison", "price": 13000, "colors": {"Argenté": 13000, "Doré": 13000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/white-Photoroom-4.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.35_07be99cb-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_e7efe444-1.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p142", "name": "Figaro Necklace", "cat": "Maison", "price": 9000, "colors": {"Argenté": 9000, "Doré": 9000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.37_6b266d66.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.37_3d3bdc48.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_4c6a6504.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_5e9cee97.jpg"], "rating": 4, "promo": false, "material": "inoxydable"}, {"id": "p182", "name": "Pearl Necklace", "cat": "Maison", "price": 6000, "colors": {"blanc": 6000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_7903d18d-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_5af6ec95.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_852e936e.jpg"], "rating": 4, "promo": false, "material": "Perle"}, {"id": "p188", "name": "Chain Necklace", "cat": "Maison", "price": 12000, "colors": {"Argenté": 12000, "Doré": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/RKbzrGu-200x200-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.34_009d4665-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.34_43199734.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.35_1f3e37ed.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p199", "name": "Ruby Chain Iced Out", "cat": "Maison", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.28.59_3b62f415-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_7cb92246.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_70587caf.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_c2e0d9e3.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p206", "name": "Rope Chain Necklace", "cat": "Maison", "price": 6000, "colors": {"Argenté": 6000, "Doré": 6000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.33_886f1e45.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.32_a4a74785.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_952d8f9d.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.39_d737e9b9.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p246", "name": "Cuban Bracelet", "cat": "Bracelets", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/images-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_77f74356.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_7474924b.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_2637ff03.jpg"], "rating": 4, "promo": false, "material": "Alloy / Cristal"}, {"id": "p257", "name": "Cluster Chain", "cat": "Maison", "price": 55000, "colors": {"Argenté": 55000, "Doré": 55000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8305.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8306.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8307.jpg"], "rating": 5, "promo": false, "material": "Laiton, zircon"}, {"id": "p278", "name": "Lightning Bolt Ring", "cat": "Bagues", "price": 12000, "colors": {"Argenté": 12000, "Doré": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.35_af33acde.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.35_837c09f1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.34_1827cffb.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.34_a9946e53.jpg"], "rating": 4, "promo": false, "material": "Laiton, Zircon"}, {"id": "p290", "name": "Grillz Teeth", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.28_3ccf3730.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.43_21f053dd-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.52_4fc4d218-1.jpg"], "rating": 4, "promo": true, "material": ""}, {"id": "p293", "name": "Grillz Teeth G03", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.26.22_45c258c4-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.16_268d9364.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.26.12_4c9a67db.jpg"], "rating": 5, "promo": true, "material": ""}, {"id": "p299", "name": "Lunette photogray solid steel", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000, "Noir": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/4703626190.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4423983304-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/4706952542-1.jpg"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p309", "name": "bagues de fiançailles", "cat": "Bagues", "price": 17000, "colors": {"Argenté": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/transparent-Photoroom.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/466738540_18120678325400979_5523705528574494225_n.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsAppImage2024-12-27a16.06.49_fdbdeb7e_696275cc-d770-40e8-866d-b15f2056e636_900x.jpg"], "rating": 4, "promo": true, "material": ""}, {"id": "p314", "name": "Tennis Chain", "cat": "Maison", "price": 25000, "colors": {"Argenté": 25000, "Doré": 25000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_13_37_IMG_8470.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_13_38_IMG_8472.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_14_38_IMG_8471.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_17_46_IMG_8474.jpg"], "rating": 4, "promo": false, "material": "Laiton, zircon"}, {"id": "p323", "name": "Trapstar", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/519zAQqGo6L._AC_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/images-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_03_02_IMG_7978.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_03_37_IMG_7981.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_04_12_IMG_7979.jpg"], "rating": 4, "promo": false, "material": "Alliage Plaquet"}, {"id": "p334", "name": "4PF", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-22-131136.png", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8555-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8556-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8557-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_15_05_01_IMG_8553.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p435", "name": "Grillz Teeth G02", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2022_09_02_02_13_IMG_4469-Copie-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_09_02_03_14_IMG_4470.jpg"], "rating": 4, "promo": true, "material": "Zinc"}, {"id": "p440", "name": "Grillz Teeth Iced Out", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_ee31e881.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_333ebd1b.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_d4d03b4a.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_b2f0e54c.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_cc323fb9.jpg"], "rating": 5, "promo": false, "material": "zircon / Laiton"}, {"id": "p449", "name": "PR Fashion Sunglasses", "cat": "Lunettes", "price": 15000, "colors": {"Noir": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG_0053.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG_0052.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG_0054.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p455", "name": "Bracelets", "cat": "Bracelets", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.55_ab682269-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.56_4adbe9ca.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.55_a5303f44.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p464", "name": "Photogray Fashion Eyes", "cat": "Lunettes", "price": 11000, "colors": {"blanc": 14000, "Noir": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/5070569745.png", "https://senluxe221.com/wp-content/uploads/2025/08/4441910672.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4705458615.png"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p473", "name": "Lunette photogray classic", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 14000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2022_06_04_13_54_IMG_3507_JPG_png.png", "https://senluxe221.com/wp-content/uploads/2025/08/4196158803.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4298741723.jpg"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p483", "name": "Lunette photogray classic once", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 14000, "Doré": 14000, "Noir": 14000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/4807371559.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4706937802.png", "https://senluxe221.com/wp-content/uploads/2025/08/4750500844.png", "https://senluxe221.com/wp-content/uploads/2025/08/4429337978.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4429343975-scaled.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4706937802-1.png"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p499", "name": "Fashion Vintage Sunglasses", "cat": "Lunettes", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0005.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0002.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0004.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0006.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p506", "name": "Collier et pendentif photo", "cat": "Maison", "price": 19000, "colors": {"Argenté": 19000, "Doré": 19000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0014.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0015.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0013.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p514", "name": "Wide Tennis Bracelet", "cat": "Bracelets", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/527998113_18055996703613644_2097177182625197438_n.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0009.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0010.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0016.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p550", "name": "Iced Out Jesus Corolla", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/white-Photoroom-1-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_44_IMG_7975.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_44_IMG_7974.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_51_IMG_7976.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p553", "name": "fashion sunglsses", "cat": "Lunettes", "price": 12000, "colors": {"blanc": 12000, "Noir": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_19_43_IMG_8005.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_20_44_IMG_8007.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_20_44_IMG_8006.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p556", "name": "Cactus jach iced out", "cat": "Maison", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_17_03_30_IMG_8064.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_17_03_30_IMG_8066.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p573", "name": "Allah Chain Iced Out", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/06296209-BED7-4661-92E0-A8DFB58C66D5.png", "https://senluxe221.com/wp-content/uploads/2025/08/2022_11_10_01_26_IMG_3952.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_11_10_01_28_IMG_3957.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2021_03_16_16_50_IMG_3255.jpg"], "rating": 4, "promo": false, "material": "Laiton, zircon"}, {"id": "p595", "name": "Pendentif tigre", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/5BFF3D17-AFB1-4BE9-BC86-B1738BC2EAD2.png", "https://senluxe221.com/wp-content/uploads/2025/08/81gI8YOJaAL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81xLZE3rdL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71Ihp63xjwL._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p610", "name": "chaîne trapstar", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/7BC2A301-A37F-4DD9-AA39-37F6B8C9BD26.png", "https://senluxe221.com/wp-content/uploads/2025/08/61kux1j5EJL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61xoBYip7IL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61uuwuTqNL._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p698", "name": "AK 47 Gun Necklace", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/0A65E625-622F-4160-A7AF-E46F8B5A29B2-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/0f5b0f61-cf34-4e8e-a66f-bdf3af076b67.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61yYznWD2HL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61yYznWD2HL._AC_SX679_-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81rR5NALfL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/618lPK9Ai1L._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p713", "name": "Cuban Chain w/ N.O.B", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/3ED5F1FC-3F8E-4828-A9B5-23F63FDCE436.png", "https://senluxe221.com/wp-content/uploads/2025/08/HIP-Iced-Out-Letters-Money-Bags-Pendants-With-13mm-Cuban-Link-Chain-Rhinestone-Necklaces-For-Men-s-Women-Rapper-Jewelry_f92354f8-e3df-4ab0-8989-b5f1f11df6a1.2cf6e9e668f0ff40da2de30dca045540.jpeg"], "rating": 4, "promo": false, "material": ""}, {"id": "p717", "name": "pendentif football", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/59B5D6FE-554F-4783-A7CF-4F3043BDF693-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/81b3DShlJbL._AC_SY675_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/51znrQ1zmvL._AC_SY675_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61sWACoZvhL._AC_SY675_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p736", "name": "Collier pendentif Couronne KING", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/7054A82A-7C92-4874-A98E-2DE05616041A.png", "https://senluxe221.com/wp-content/uploads/2025/08/3219e6bdf062c1c3e7372c15423ae937.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17234461884cea88ccebde6f3796c220bea9604404_thumbnail_405x552.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p746", "name": "Gold Oval Moissanite Ring", "cat": "Bagues", "price": 155000, "colors": {"or": 155000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132529.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132704.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132634.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132735.png"], "rating": 4, "promo": false, "material": ""}, {"id": "p753", "name": "Bague Moissanite en Argent Véritable", "cat": "Bagues", "price": 80000, "colors": {"Argenté": 80000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/71bdedaUL._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81QHyj4p53L._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71cmGPzORPL._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61UZlZVcG1L._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71hITXj2yL._AC_SY695_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p761", "name": "bagues de fiançailles de haute qualité", "cat": "Bagues", "price": 15000, "colors": {"Argenté": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/17060013071171.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17060013077083.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17060013074622.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p802", "name": "Magnetic Earrings", "cat": "Maison", "price": 3000, "colors": {"blanc": 3000, "Noir": 3000, "Bleu": null}, "images": ["https://senluxe221.com/wp-content/uploads/2025/11/IMG-4236_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4239_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4240_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4235_600x600.webp"], "rating": 4, "promo": false, "material": ""}, {"id": "p808", "name": "Boucles d’oreilles", "cat": "Maison", "price": 5000, "colors": {"Argenté": 5000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/11/WhatsApp-Image-2024-12-23-a-20.28.58_222a023c.jpg", "https://senluxe221.com/wp-content/uploads/2025/11/WhatsApp-Image-2024-12-23-a-20.28.59_c2e13612.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "ring-couronne-moissanite", "name": "Bague de couronne en argent sterling sertie de moissanite 0,5 carats", "cat": "Bagues", "price": 60000, "colors": {"Bicolore": 60000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/2EEAEF29-20FD-441C-B401-7B585A9CE00B_900x_9064b297-f3c5-47bf-b5e1-11aa61a1a444.webp?v=1784030330", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/3034D201-E338-4011-8744-00BB7C0FA9A1_900x_87e21916-9530-40f3-a838-910117ff5a94.webp?v=1784030330", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/EA631AAE-B23D-4356-99FB-D7BC96DA0BDB_900x_5aa0e716-db17-4ad6-ab01-fed24040a510.webp?v=1784030330"], "promo": false, "rating": 4}, {"id": "ring-fiancailles-argent-80k", "name": "Bague de fiançailles en argent", "cat": "Bagues", "price": 80000, "colors": {"Bicolore": 80000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/11A454FB-D487-4E7B-A55D-8E2539080E38_900x_c64b5ef1-703a-47b7-b4d4-56840d180dca.webp?v=1784029996", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/84E4CA7B-E6BE-4C5A-B4D4-3FC07FA109D1_900x_70bb5cd0-ce1c-4665-9b36-d8f4bb4adbf0.webp?v=1784029995", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/F7BC8F62-03E9-4D5C-BD9F-D3356FD8D4BE_900x_4f5b5552-f5ad-410b-8658-25ef3e1edd1e.webp?v=1784029996", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/79A7DD01-E79D-452C-9B29-E55F3FA9A7F3_900x_3135b2d7-6026-44ea-bc4e-dfb0fd37ce7c.webp?v=1784029995"], "promo": false, "rating": 4}, {"id": "ring-fiancailles-argent-65k", "name": "Bague de fiançailles en argent", "cat": "Bagues", "price": 65000, "colors": {"Argenté": 65000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/F0663784-6D14-4297-A3B5-3DE8DBAD5B85_900x_0bbd07c2-72c1-48d6-a130-d700a8c04e6f.webp?v=1784030700", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/754596EC-BC22-4905-8EE0-5D0B1E50B531_900x_204876a9-9e3d-40a8-bb36-edabd8682979.webp?v=1784030700", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/24425F2B-7DD0-4458-8556-FFE8EE9B5F85_900x_7697e3d6-381b-420d-aeba-53d339c47ef5.webp?v=1784030700"], "promo": false, "rating": 4}, {"id": "ring-solitaire-argent", "name": "Bague solitaire en argent", "cat": "Bagues", "price": 30000, "colors": {"Argenté": 30000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/IMG_7490_900x_528554b8-8ce2-492b-8abb-ec55f1d2a992.webp?v=1784027479", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/IMG_7489_1024x1024_ac3a5719-3127-411c-94df-ad8be400946e.webp?v=1784027480"], "promo": false, "rating": 4}];
+const PRODUCTS = [{"id": "p116", "name": "Figaro + Rope Chain Combo", "cat": "Maison", "price": 13000, "colors": {"Argenté": 13000, "Doré": 13000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/white-Photoroom-4.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.35_07be99cb-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_e7efe444-1.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p142", "name": "Figaro Necklace", "cat": "Maison", "price": 9000, "colors": {"Argenté": 9000, "Doré": 9000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.37_6b266d66.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.37_3d3bdc48.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_4c6a6504.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_5e9cee97.jpg"], "rating": 4, "promo": false, "material": "inoxydable"}, {"id": "p182", "name": "Pearl Necklace", "cat": "Maison", "price": 6000, "colors": {"blanc": 6000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_7903d18d-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_5af6ec95.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.36_852e936e.jpg"], "rating": 4, "promo": false, "material": "Perle"}, {"id": "p188", "name": "Chain Necklace", "cat": "Maison", "price": 12000, "colors": {"Argenté": 12000, "Doré": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/RKbzrGu-200x200-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.34_009d4665-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.34_43199734.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.35_1f3e37ed.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p199", "name": "Ruby Chain Iced Out", "cat": "Maison", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.28.59_3b62f415-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_7cb92246.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_70587caf.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.00_c2e0d9e3.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p206", "name": "Rope Chain Necklace", "cat": "Maison", "price": 6000, "colors": {"Argenté": 6000, "Doré": 6000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.33_886f1e45.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.32_a4a74785.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.38_952d8f9d.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2025-02-08-a-20.03.39_d737e9b9.jpg"], "rating": 4, "promo": true, "material": "inoxydable"}, {"id": "p246", "name": "Cuban Bracelet", "cat": "Bracelets", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/images-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_77f74356.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_7474924b.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.29.01_2637ff03.jpg"], "rating": 4, "promo": false, "material": "Alloy / Cristal"}, {"id": "p257", "name": "Cluster Chain", "cat": "Maison", "price": 55000, "colors": {"Argenté": 55000, "Doré": 55000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8305.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8306.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_31_04_14_IMG_8307.jpg"], "rating": 5, "promo": false, "material": "Laiton, zircon"}, {"id": "p278", "name": "Lightning Bolt Ring", "cat": "Bagues", "price": 12000, "colors": {"Argenté": 12000, "Doré": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.35_af33acde.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.35_837c09f1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.34_1827cffb.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.34_a9946e53.jpg"], "rating": 4, "promo": false, "material": "Laiton, Zircon"}, {"id": "p290", "name": "Grillz Teeth", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.28_3ccf3730.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.43_21f053dd-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.52_4fc4d218-1.jpg"], "rating": 4, "promo": true, "material": ""}, {"id": "p293", "name": "Grillz Teeth G03", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.26.22_45c258c4-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.27.16_268d9364.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-23-a-20.26.12_4c9a67db.jpg"], "rating": 5, "promo": true, "material": ""}, {"id": "p299", "name": "Lunette photogray solid steel", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000, "Noir": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/4703626190.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4423983304-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/4706952542-1.jpg"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p309", "name": "bagues de fiançailles", "cat": "Bagues", "price": 17000, "colors": {"Argenté": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/transparent-Photoroom.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/466738540_18120678325400979_5523705528574494225_n.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsAppImage2024-12-27a16.06.49_fdbdeb7e_696275cc-d770-40e8-866d-b15f2056e636_900x.jpg"], "rating": 4, "promo": true, "material": ""}, {"id": "p314", "name": "Tennis Chain", "cat": "Maison", "price": 25000, "colors": {"Argenté": 25000, "Doré": 25000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_13_37_IMG_8470.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_13_38_IMG_8472.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_14_38_IMG_8471.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_11_17_46_IMG_8474.jpg"], "rating": 4, "promo": false, "material": "Laiton, zircon"}, {"id": "p323", "name": "Trapstar", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/519zAQqGo6L._AC_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/images-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_03_02_IMG_7978.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_03_37_IMG_7981.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_04_12_IMG_7979.jpg"], "rating": 4, "promo": false, "material": "Alliage Plaquet"}, {"id": "p334", "name": "4PF", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-22-131136.png", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8555-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8556-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_12_24_03_42_IMG_8557-Copie.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_08_15_05_01_IMG_8553.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p435", "name": "Grillz Teeth G02", "cat": "Maison", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2022_09_02_02_13_IMG_4469-Copie-2.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_09_02_03_14_IMG_4470.jpg"], "rating": 4, "promo": true, "material": "Zinc"}, {"id": "p440", "name": "Grillz Teeth Iced Out", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_ee31e881.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_333ebd1b.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_d4d03b4a.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_b2f0e54c.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-08-a-02.08.06_cc323fb9.jpg"], "rating": 5, "promo": false, "material": "zircon / Laiton"}, {"id": "p449", "name": "PR Fashion Sunglasses", "cat": "Lunettes", "price": 15000, "colors": {"Noir": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG_0053.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG_0052.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG_0054.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p455", "name": "Bracelets", "cat": "Bracelets", "price": 11000, "colors": {"Argenté": 11000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.55_ab682269-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.56_4adbe9ca.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/WhatsApp-Image-2024-12-24-a-12.38.55_a5303f44.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p464", "name": "Photogray Fashion Eyes", "cat": "Lunettes", "price": 11000, "colors": {"blanc": 14000, "Noir": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/5070569745.png", "https://senluxe221.com/wp-content/uploads/2025/08/4441910672.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4705458615.png"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p473", "name": "Lunette photogray classic", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 14000, "Doré": 11000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2022_06_04_13_54_IMG_3507_JPG_png.png", "https://senluxe221.com/wp-content/uploads/2025/08/4196158803.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4298741723.jpg"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p483", "name": "Lunette photogray classic once", "cat": "Lunettes", "price": 11000, "colors": {"Argenté": 14000, "Doré": 14000, "Noir": 14000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/4807371559.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4706937802.png", "https://senluxe221.com/wp-content/uploads/2025/08/4750500844.png", "https://senluxe221.com/wp-content/uploads/2025/08/4429337978.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4429343975-scaled.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/4706937802-1.png"], "rating": 4, "promo": false, "material": "", "lensOptions": true}, {"id": "p499", "name": "Fashion Vintage Sunglasses", "cat": "Lunettes", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0005.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0002.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0004.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0006.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p506", "name": "Collier et pendentif photo", "cat": "Maison", "price": 19000, "colors": {"Argenté": 19000, "Doré": 19000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0014.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0015.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0013.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p514", "name": "Wide Tennis Bracelet", "cat": "Bracelets", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/527998113_18055996703613644_2097177182625197438_n.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0009.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0010.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/IMG-20250808-WA0016.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p550", "name": "Iced Out Jesus Corolla", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/white-Photoroom-1-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_44_IMG_7975.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_44_IMG_7974.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_02_51_IMG_7976.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p553", "name": "fashion sunglsses", "cat": "Lunettes", "price": 12000, "colors": {"blanc": 12000, "Noir": 12000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_19_43_IMG_8005.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_20_44_IMG_8007.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_13_20_44_IMG_8006.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p556", "name": "Cactus jach iced out", "cat": "Maison", "price": 15000, "colors": {"Argenté": 15000, "Doré": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/2023_07_17_03_30_IMG_8064.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2023_07_17_03_30_IMG_8066.jpg"], "rating": 5, "promo": false, "material": ""}, {"id": "p573", "name": "Allah Chain Iced Out", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/06296209-BED7-4661-92E0-A8DFB58C66D5.png", "https://senluxe221.com/wp-content/uploads/2025/08/2022_11_10_01_26_IMG_3952.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2022_11_10_01_28_IMG_3957.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/2021_03_16_16_50_IMG_3255.jpg"], "rating": 4, "promo": false, "material": "Laiton, zircon"}, {"id": "p595", "name": "Pendentif tigre", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/5BFF3D17-AFB1-4BE9-BC86-B1738BC2EAD2.png", "https://senluxe221.com/wp-content/uploads/2025/08/81gI8YOJaAL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81xLZE3rdL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71Ihp63xjwL._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p610", "name": "chaîne trapstar", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/7BC2A301-A37F-4DD9-AA39-37F6B8C9BD26.png", "https://senluxe221.com/wp-content/uploads/2025/08/61kux1j5EJL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61xoBYip7IL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61uuwuTqNL._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p698", "name": "AK 47 Gun Necklace", "cat": "Maison", "price": 18000, "colors": {"Argenté": 18000, "Doré": 18000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/0A65E625-622F-4160-A7AF-E46F8B5A29B2-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/0f5b0f61-cf34-4e8e-a66f-bdf3af076b67.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61yYznWD2HL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61yYznWD2HL._AC_SX679_-1.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81rR5NALfL._AC_SX679_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/618lPK9Ai1L._AC_SX679_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p713", "name": "Cuban Chain w/ N.O.B", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/3ED5F1FC-3F8E-4828-A9B5-23F63FDCE436.png", "https://senluxe221.com/wp-content/uploads/2025/08/HIP-Iced-Out-Letters-Money-Bags-Pendants-With-13mm-Cuban-Link-Chain-Rhinestone-Necklaces-For-Men-s-Women-Rapper-Jewelry_f92354f8-e3df-4ab0-8989-b5f1f11df6a1.2cf6e9e668f0ff40da2de30dca045540.jpeg"], "rating": 4, "promo": false, "material": ""}, {"id": "p717", "name": "pendentif football", "cat": "Maison", "price": 17000, "colors": {"Argenté": 17000, "Doré": 17000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/59B5D6FE-554F-4783-A7CF-4F3043BDF693-1.png", "https://senluxe221.com/wp-content/uploads/2025/08/81b3DShlJbL._AC_SY675_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/51znrQ1zmvL._AC_SY675_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61sWACoZvhL._AC_SY675_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p736", "name": "Collier pendentif Couronne KING", "cat": "Maison", "price": 30000, "colors": {"Argenté": 30000, "Doré": 30000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/7054A82A-7C92-4874-A98E-2DE05616041A.png", "https://senluxe221.com/wp-content/uploads/2025/08/3219e6bdf062c1c3e7372c15423ae937.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17234461884cea88ccebde6f3796c220bea9604404_thumbnail_405x552.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p746", "name": "Gold Oval Moissanite Ring", "cat": "Bagues", "price": 155000, "colors": {"or": 155000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132529.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132704.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132634.png", "https://senluxe221.com/wp-content/uploads/2025/08/Capture-decran-2025-08-24-132735.png"], "rating": 4, "promo": false, "material": ""}, {"id": "p753", "name": "Bague Moissanite en Argent Véritable", "cat": "Bagues", "price": 80000, "colors": {"Argenté": 80000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/71bdedaUL._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/81QHyj4p53L._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71cmGPzORPL._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/61UZlZVcG1L._AC_SY695_.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/71hITXj2yL._AC_SY695_.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p761", "name": "bagues de fiançailles de haute qualité", "cat": "Bagues", "price": 15000, "colors": {"Argenté": 15000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/08/17060013071171.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17060013077083.jpg", "https://senluxe221.com/wp-content/uploads/2025/08/17060013074622.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "p802", "name": "Magnetic Earrings", "cat": "Maison", "price": 3000, "colors": {"blanc": 3000, "Noir": 3000, "Bleu": null}, "images": ["https://senluxe221.com/wp-content/uploads/2025/11/IMG-4236_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4239_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4240_600x600.webp", "https://senluxe221.com/wp-content/uploads/2025/11/IMG-4235_600x600.webp"], "rating": 4, "promo": false, "material": ""}, {"id": "p808", "name": "Boucles d’oreilles", "cat": "Maison", "price": 5000, "colors": {"Argenté": 5000}, "images": ["https://senluxe221.com/wp-content/uploads/2025/11/WhatsApp-Image-2024-12-23-a-20.28.58_222a023c.jpg", "https://senluxe221.com/wp-content/uploads/2025/11/WhatsApp-Image-2024-12-23-a-20.28.59_c2e13612.jpg"], "rating": 4, "promo": false, "material": ""}, {"id": "ring-couronne-moissanite", "name": "Bague de couronne en argent sterling sertie de moissanite 0,5 carats", "cat": "Bagues", "price": 60000, "colors": {"Bicolore": 60000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/2EEAEF29-20FD-441C-B401-7B585A9CE00B_900x_9064b297-f3c5-47bf-b5e1-11aa61a1a444.webp?v=1784030330", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/3034D201-E338-4011-8744-00BB7C0FA9A1_900x_87e21916-9530-40f3-a838-910117ff5a94.webp?v=1784030330", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/EA631AAE-B23D-4356-99FB-D7BC96DA0BDB_900x_5aa0e716-db17-4ad6-ab01-fed24040a510.webp?v=1784030330"], "promo": false, "rating": 4}, {"id": "ring-fiancailles-argent-80k", "name": "Bague de fiançailles en argent", "cat": "Bagues", "price": 80000, "colors": {"Bicolore": 80000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/11A454FB-D487-4E7B-A55D-8E2539080E38_900x_c64b5ef1-703a-47b7-b4d4-56840d180dca.webp?v=1784029996", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/84E4CA7B-E6BE-4C5A-B4D4-3FC07FA109D1_900x_70bb5cd0-ce1c-4665-9b36-d8f4bb4adbf0.webp?v=1784029995", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/F7BC8F62-03E9-4D5C-BD9F-D3356FD8D4BE_900x_4f5b5552-f5ad-410b-8658-25ef3e1edd1e.webp?v=1784029996", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/79A7DD01-E79D-452C-9B29-E55F3FA9A7F3_900x_3135b2d7-6026-44ea-bc4e-dfb0fd37ce7c.webp?v=1784029995"], "promo": false, "rating": 4, "sizes": ["6", "7", "8", "9"]}, {"id": "ring-fiancailles-argent-65k", "name": "Bague de fiançailles en argent", "cat": "Bagues", "price": 65000, "colors": {"Argenté": 65000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/F0663784-6D14-4297-A3B5-3DE8DBAD5B85_900x_0bbd07c2-72c1-48d6-a130-d700a8c04e6f.webp?v=1784030700", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/754596EC-BC22-4905-8EE0-5D0B1E50B531_900x_204876a9-9e3d-40a8-bb36-edabd8682979.webp?v=1784030700", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/24425F2B-7DD0-4458-8556-FFE8EE9B5F85_900x_7697e3d6-381b-420d-aeba-53d339c47ef5.webp?v=1784030700"], "promo": false, "rating": 4, "sizes": ["6", "7", "8", "9"]}, {"id": "ring-solitaire-argent", "name": "Bague solitaire en argent", "cat": "Bagues", "price": 30000, "colors": {"Argenté": 30000}, "images": ["https://cdn.shopify.com/s/files/1/0696/6768/4540/files/IMG_7490_900x_528554b8-8ce2-492b-8abb-ec55f1d2a992.webp?v=1784027479", "https://cdn.shopify.com/s/files/1/0696/6768/4540/files/IMG_7489_1024x1024_ac3a5719-3127-411c-94df-ad8be400946e.webp?v=1784027480"], "promo": false, "rating": 4}];
 
 const CATEGORIES = ['Bagues','Bracelets','Lunettes','Maison','Caméra'];
 const COLOR_CLASS = {'Doré':'gold','Argenté':'silver','Noir':'black','blanc':'white','or':'gold','Bleu':'blue','Standard':'gold','Bicolore':'bicolor'};
@@ -1152,7 +1226,8 @@ function buildProductCard(p, i){
   const card = document.createElement('div');
   card.className='product-card';
   card.style.animationDelay = (i*0.03)+'s';
-  const quickAddAction = p.lensOptions ? `openQuickView('${p.id}')` : `addToCart('${p.id}')`;
+  const needsModal = p.lensOptions || (p.sizes && p.sizes.length);
+  const quickAddAction = needsModal ? `openQuickView('${p.id}')` : `addToCart('${p.id}')`;
   card.innerHTML = `
     <div class="product-media img-skel" onclick="openQuickView('${p.id}')">
       ${p.promo ? '<span class="badge">Promo</span>' : ''}
@@ -1187,6 +1262,7 @@ function selectColor(e, id, color){
 let qvProduct = null;
 let qvCurrentIndex = 0;
 let qvColor = null;
+let qvSize = null; /* null | '6'|'7'|'8'|'9' — only used when product.sizes is present */
 let qvLens = null; /* null | 'simple' | 'antireflet' — only used when product.lensOptions is true */
 const LENS_FEE = {simple:0, antireflet:3000};
 const LENS_LABEL = {simple:'Photogray simples', antireflet:'Photogray antireflet (+3 000 FCFA)'};
@@ -1214,6 +1290,7 @@ function openQuickView(id, skipUrlUpdate){
   qvCurrentIndex = 0;
   const colorKeys = Object.keys(p.colors);
   qvColor = colorKeys.length===1 ? colorKeys[0] : null; /* auto-select only if a single variant exists */
+  qvSize = null;
   qvLens = null;
 
   document.getElementById('qvCat').textContent = p.cat;
@@ -1224,6 +1301,15 @@ function openQuickView(id, skipUrlUpdate){
 
   const colorsWrap = document.getElementById('qvColors');
   colorsWrap.innerHTML = colorKeys.map((c)=>`<div class="swatch ${COLOR_CLASS[c]||'gold'} ${qvColor===c?'selected':''}" onclick="qvSelectColor(this,'${c}')" title="${COLOR_LABEL[c]||c}"></div>`).join('');
+
+  const sizeWrap = document.getElementById('qvSizeWrap');
+  if(p.sizes && p.sizes.length){
+    sizeWrap.style.display = 'block';
+    document.getElementById('qvSizeWarning').style.display = 'none';
+    document.getElementById('qvSizePills').innerHTML = p.sizes.map(s=>`<div class="size-pill" data-size="${s}" onclick="selectSize('${s}')">${s}</div>`).join('');
+  } else {
+    sizeWrap.style.display = 'none';
+  }
 
   const lensWrap = document.getElementById('qvLensWrap');
   if(p.lensOptions){
@@ -1245,6 +1331,13 @@ function openQuickView(id, skipUrlUpdate){
   if(!skipUrlUpdate){
     history.pushState({productId:p.id}, '', '#/product/' + slugify(p.name));
   }
+}
+function selectSize(size){
+  qvSize = size;
+  document.querySelectorAll('.size-pill').forEach(el=>{
+    el.classList.toggle('selected', el.dataset.size===size);
+  });
+  document.getElementById('qvSizeWarning').style.display = 'none';
 }
 function selectLens(key){
   qvLens = key;
@@ -1295,6 +1388,13 @@ function qvRequireColor(){
   showToast('Veuillez sélectionner une couleur avant de continuer.');
   return false;
 }
+function qvRequireSize(){
+  if(!qvProduct.sizes || !qvProduct.sizes.length) return true;
+  if(qvSize) return true;
+  document.getElementById('qvSizeWarning').style.display = 'block';
+  showToast('Veuillez sélectionner une taille avant de continuer.');
+  return false;
+}
 function qvRequireLens(){
   if(!qvProduct.lensOptions) return true;
   if(qvLens) return true;
@@ -1342,15 +1442,17 @@ function buildQvThumbs(){
 }
 function addToCartFromQV(){
   if(!qvRequireColor()) return;
+  if(!qvRequireSize()) return;
   if(!qvRequireLens()) return;
-  addToCartDirect(qvProduct.id, qvColor, qvProduct.lensOptions ? qvLens : null);
+  addToCartDirect(qvProduct.id, qvColor, qvProduct.lensOptions ? qvLens : null, (qvProduct.sizes && qvProduct.sizes.length) ? qvSize : null);
   showToast('Ajouté au panier');
 }
 function buyNowFromQV(){
   if(!qvRequireColor()) return;
+  if(!qvRequireSize()) return;
   if(!qvRequireLens()) return;
   const p = qvProduct;
-  openOrderFormDirect({ id:p.id, name:p.name, price:qvUnitPrice(), color:qvColor, lens: p.lensOptions ? qvLens : null, qty:1, img:firstImg(p) });
+  openOrderFormDirect({ id:p.id, name:p.name, price:qvUnitPrice(), color:qvColor, size:(p.sizes && p.sizes.length) ? qvSize : null, lens: p.lensOptions ? qvLens : null, qty:1, img:firstImg(p) });
 }
 function buildSimilarProducts(p){
   const wrap = document.getElementById('qvSimilar');
@@ -1407,14 +1509,14 @@ lbWrap.addEventListener('touchend', e=>{
 
 /* ---------- cart ---------- */
 let cart = [];
-function addToCartDirect(id, color, lens){
+function addToCartDirect(id, color, lens, size){
   const p = PRODUCTS.find(x=>x.id===id);
-  const key = id+'-'+color+(lens?('-'+lens):'');
+  const key = id+'-'+color+(lens?('-'+lens):'')+(size?('-'+size):'');
   const existing = cart.find(c=>c.key===key);
   const unitPrice = (p.colors[color] || p.price) + (lens ? (LENS_FEE[lens]||0) : 0);
   if(existing){ existing.qty++; }
   else{
-    cart.push({key, id:p.id, name:p.name, price:unitPrice, color, lens:lens||null, qty:1, img:firstImg(p)});
+    cart.push({key, id:p.id, name:p.name, price:unitPrice, color, lens:lens||null, size:size||null, qty:1, img:firstImg(p)});
   }
   renderCart();
 }
@@ -1449,7 +1551,7 @@ function renderCart(){
         <img src="${c.img}" alt="${c.name}" loading="lazy" onerror="this.onerror=null; this.src='https://placehold.co/500x500/faf9f6/b8935f?text=SEN+LUXE';">
         <div class="ci-info">
           <h4>${c.name}</h4>
-          <div class="ci-variant">Finition : ${COLOR_LABEL[c.color]||c.color}${c.lens ? ' · Lentilles : '+LENS_LABEL[c.lens] : ''}</div>
+          <div class="ci-variant">Finition : ${COLOR_LABEL[c.color]||c.color}${c.size ? ' · Taille : '+c.size : ''}${c.lens ? ' · Lentilles : '+LENS_LABEL[c.lens] : ''}</div>
           <div class="ci-qty">
             <button onclick="changeQty('${c.key}',-1)">−</button>
             <span>${c.qty}</span>
@@ -1512,6 +1614,9 @@ function openOrderForm(){
   if(cart.length===0){ showToast('Votre panier est vide'); return; }
   resetDeliverySelection();
   updateOrderTotals();
+  const form = document.getElementById('orderForm');
+  form.reset();
+  clearFieldErrors(form);
   document.getElementById('orderOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1519,6 +1624,9 @@ function openOrderFormDirect(item){
   directOrder = [item];
   resetDeliverySelection();
   updateOrderTotals();
+  const form = document.getElementById('orderForm');
+  form.reset();
+  clearFieldErrors(form);
   document.getElementById('orderOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1526,8 +1634,172 @@ function closeOrderForm(){
   document.getElementById('orderOverlay').classList.remove('open');
   document.body.style.overflow='';
 }
+/* ================== EMAILJS CONFIG ================== */
+/* Tout le design de l'e-mail est généré ici, directement dans le code du site.
+   EmailJS ne sert que de "facteur" : il reçoit le HTML déjà prêt (email_body) et l'envoie.
+   Configuration nécessaire côté EmailJS (une seule fois, aucun design à y faire) :
+   1) Créez un compte gratuit sur https://www.emailjs.com/
+   2) Connectez un service e-mail (Gmail conseillé) -> copiez le Service ID
+   3) Créez un template vierge : dans le corps du template, mettez UNIQUEMENT {{{email_body}}}
+      (mode code "</>", champ "To email" = {{to_email}}, "Subject" = {{email_subject}})
+      -> copiez le Template ID
+   4) Récupérez votre Public Key dans Account > General
+   5) Remplacez les 3 valeurs ci-dessous */
+const EMAILJS_PUBLIC_KEY  = 'E5M3KCwdjD887-7GP';
+const EMAILJS_SERVICE_ID  = 'service_wsgv1ij';
+const EMAILJS_TEMPLATE_ID = 'template_5q6ittg';
+if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
+  emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
+}
+
+function buildProductsTableHtml(items){
+  const header = `
+    <tr>
+      <td colspan="2" style="padding:0 10px 8px;font-family:Arial,sans-serif;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#b8935f;border-bottom:2px solid #0a0a0a;">Article</td>
+      <td style="padding:0 10px 8px;font-family:Arial,sans-serif;font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:#b8935f;text-align:right;border-bottom:2px solid #0a0a0a;">Prix</td>
+    </tr>`;
+  const rows = items.map(c=>{
+    const variantBits = [];
+    variantBits.push(`Couleur : ${COLOR_LABEL[c.color]||c.color}`);
+    if(c.size) variantBits.push(`Taille : ${c.size}`);
+    if(c.lens) variantBits.push(`Lentilles : ${LENS_LABEL[c.lens]}`);
+    return `
+      <tr>
+        <td width="76" style="padding:16px 10px 16px 0;border-bottom:1px solid #eee;">
+          <img src="${c.img}" alt="${c.name}" width="72" height="72" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #eee;display:block;">
+        </td>
+        <td style="padding:16px 10px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;">
+          <div style="font-size:15px;font-weight:700;color:#0a0a0a;margin-bottom:5px;line-height:1.3;">${c.name}</div>
+          <div style="font-size:12px;color:#888;line-height:1.7;">${variantBits.join(' &nbsp;·&nbsp; ')}</div>
+          <div style="font-size:12px;color:#888;">Quantité : <strong style="color:#0a0a0a;">${c.qty}</strong></div>
+        </td>
+        <td style="padding:16px 0 16px 10px;border-bottom:1px solid #eee;font-family:Arial,sans-serif;font-size:14px;font-weight:600;color:#0a0a0a;text-align:right;white-space:nowrap;vertical-align:top;">
+          ${fmt(c.price*c.qty)}
+        </td>
+      </tr>`;
+  }).join('');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">${header}${rows}</table>`;
+}
+
+/* Construit l'e-mail complet (bandeau, photo, tableaux, total, client, pied de page).
+   C'est la SEULE source du design de l'e-mail — tout est ici, dans le code du site. */
+function buildOrderEmailHtml(data){
+  const productsTable = buildProductsTableHtml(data.items);
+  return `
+<div style="background:#f4f2ee;padding:32px 16px;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#ffffff;">
+    <tr>
+      <td style="background:#0a0a0a;padding:32px 32px 26px;text-align:center;">
+        <div style="color:#d4af37;font-size:11px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">SEN LUXE</div>
+        <div style="color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.3px;">Nouvelle commande</div>
+        <div style="color:#d4af37;font-size:12px;margin-top:8px;font-weight:600;">N° ${data.orderNumber}</div>
+        <div style="color:#999;font-size:11.5px;margin-top:6px;">Reçue le ${data.orderDate}</div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:0;">
+        <img src="${data.items[0].img}" alt="Produit commandé" width="600" style="width:100%;max-height:340px;object-fit:cover;display:block;">
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:28px 32px 6px;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b8935f;font-weight:bold;margin-bottom:14px;">Détail de la commande</div>
+        ${productsTable}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:8px 32px 26px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+          <tr>
+            <td style="padding:8px 0;font-size:13px;color:#555;">Sous-total produits</td>
+            <td style="padding:8px 0;font-size:13px;color:#0a0a0a;text-align:right;">${data.subtotal}</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 0;font-size:13px;color:#555;">Livraison — ${data.deliveryOption}</td>
+            <td style="padding:8px 0;font-size:13px;color:#0a0a0a;text-align:right;">${data.deliveryFee}</td>
+          </tr>
+          <tr><td colspan="2" style="padding-top:14px;border-top:2px solid #0a0a0a;"></td></tr>
+          <tr>
+            <td style="padding:12px 0 0;font-size:16px;font-weight:bold;color:#0a0a0a;">TOTAL À PAYER</td>
+            <td style="padding:12px 0 0;font-size:22px;font-weight:bold;color:#b8935f;text-align:right;">${data.total}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr><td style="padding:0 32px;"><div style="height:1px;background:#eee;"></div></td></tr>
+    <tr>
+      <td style="padding:26px 32px 30px;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b8935f;font-weight:bold;margin-bottom:14px;">Informations du client</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#faf9f6;border-radius:6px;overflow:hidden;">
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;width:38%;border-bottom:1px solid #eee;">Nom et prénom</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.fullname}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Téléphone</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.phone}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Adresse</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.address}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Livraison</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.deliveryOption}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;">Commentaire</td>
+            <td style="padding:12px 16px;font-size:13.5px;color:#555;">${data.comment || '—'}</td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+    <tr>
+      <td style="background:#0a0a0a;padding:20px 32px;text-align:center;">
+        <span style="color:#d4af37;font-size:11px;letter-spacing:2px;">SEN LUXE</span>
+        <span style="color:#666;font-size:11px;"> — Maison de joaillerie née à Dakar</span>
+      </td>
+    </tr>
+  </table>
+</div>`;
+}
+
+function clearFieldErrors(form){
+  form.querySelectorAll('.form-field').forEach(el=>el.classList.remove('has-error'));
+}
+function showFieldError(fieldId, message){
+  const field = document.getElementById(fieldId).closest('.form-field');
+  field.classList.add('has-error');
+  document.getElementById('err-'+fieldId.replace('of','').toLowerCase()).textContent = message;
+}
+function validateOrderForm(f){
+  clearFieldErrors(f);
+  let ok = true;
+  const req = [
+    {id:'ofFullname', val:f.fullname.value.trim(), msg:'Merci de renseigner votre nom et prénom.'},
+    {id:'ofAddress', val:f.address.value.trim(), msg:'Merci de renseigner votre adresse.'},
+  ];
+  req.forEach(r=>{ if(!r.val){ showFieldError(r.id, r.msg); ok = false; } });
+
+  const phoneVal = f.phone.value.trim();
+  const phoneDigits = phoneVal.replace(/[^0-9]/g,'');
+  if(!phoneVal){
+    showFieldError('ofPhone', 'Merci de renseigner votre numéro de téléphone.');
+    ok = false;
+  } else if(phoneDigits.length < 9){
+    showFieldError('ofPhone', 'Ce numéro semble incomplet — vérifiez le format.');
+    ok = false;
+  }
+  return ok;
+}
 function submitOrder(e){
   e.preventDefault();
+
+  const f = e.target;
+  if(!validateOrderForm(f)){
+    showToast('Merci de corriger les champs indiqués en rouge.');
+    return;
+  }
 
   if(!deliveryOption){
     document.getElementById('deliveryWarning').style.display = 'block';
@@ -1535,40 +1807,67 @@ function submitOrder(e){
     return;
   }
 
-  const f = e.target;
-  const nom = f.nom.value.trim();
-  const prenom = f.prenom.value.trim();
+  const fullname = f.fullname.value.trim();
+  const spaceIdx = fullname.indexOf(' ');
+  const prenom = spaceIdx === -1 ? fullname : fullname.slice(0, spaceIdx);
+  const nom = spaceIdx === -1 ? '' : fullname.slice(spaceIdx + 1);
   const phone = f.phone.value.trim();
   const address = f.address.value.trim();
   const comment = f.comment.value.trim();
 
   const items = currentOrderItems();
-  const lines = items.map(c=>
-    `- ${c.name} (${COLOR_LABEL[c.color]||c.color}) x${c.qty} — ${fmt(c.price*c.qty)}`
-    + (c.lens ? `%0D%0A  Type de lentilles : ${LENS_LABEL[c.lens]}` : '')
-    + `%0D%0A  Photo : ${c.img}`
-  ).join('%0D%0A');
   const subtotal = orderProductsSubtotal();
   const deliveryFee = DELIVERY_PRICES[deliveryOption];
   const total = subtotal + deliveryFee;
+  const orderNumber = 'SL-' + Date.now().toString().slice(-8);
 
-  let body = `Client : ${prenom} ${nom}%0D%0ATéléphone : ${phone}%0D%0AAdresse : ${address}%0D%0A%0D%0AProduits commandés :%0D%0A${lines}%0D%0A%0D%0ASous-total produits : ${fmt(subtotal)}%0D%0ALivraison (${DELIVERY_LABELS[deliveryOption]}) : ${fmt(deliveryFee)}%0D%0ATotal à payer : ${fmt(total)}`;
-  if(comment){ body += `%0D%0A%0D%0ACommentaires du client :%0D%0A${comment}`; }
+  const templateParams = {
+    to_email: ORDER_EMAIL,
+    email_subject: `Nouvelle commande SEN LUXE — ${fullname} (${orderNumber})`,
+    email_body: buildOrderEmailHtml({
+      orderNumber,
+      orderDate: new Date().toLocaleString('fr-FR', {dateStyle:'long', timeStyle:'short'}),
+      fullname, nom, prenom, phone, address, comment,
+      deliveryOption: DELIVERY_LABELS[deliveryOption],
+      deliveryFee: fmt(deliveryFee),
+      subtotal: fmt(subtotal),
+      total: fmt(total),
+      items,
+    }),
+  };
 
-  const mailto = `mailto:${ORDER_EMAIL}?subject=${encodeURIComponent('Nouvelle commande SEN LUXE — '+prenom+' '+nom)}&body=${body}`;
-  window.location.href = mailto;
-
-  const wasDirect = !!directOrder;
-  closeOrderForm();
-  closeQuickView();
-  if(!wasDirect){
-    closeCart();
-    cart = [];
-    renderCart();
+  if(!window.emailjs || EMAILJS_PUBLIC_KEY === 'YOUR_PUBLIC_KEY'){
+    showToast("Configuration e-mail manquante — contactez l'administrateur du site");
+    console.error('EmailJS non configuré : renseignez EMAILJS_PUBLIC_KEY / SERVICE_ID / TEMPLATE_ID dans le code.');
+    return;
   }
-  directOrder = null;
-  deliveryOption = null;
-  openConfirmModal();
+
+  const submitBtn = f.querySelector('button[type="submit"]');
+  const originalLabel = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Envoi en cours…';
+
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams).then(()=>{
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+
+    const wasDirect = !!directOrder;
+    closeOrderForm();
+    closeQuickView();
+    if(!wasDirect){
+      closeCart();
+      cart = [];
+      renderCart();
+    }
+    directOrder = null;
+    deliveryOption = null;
+    openConfirmModal();
+  }).catch((err)=>{
+    console.error('Échec envoi commande :', err);
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+    showToast("Échec de l'envoi — merci de réessayer ou de nous écrire sur WhatsApp");
+  });
 }
 
 /* ================== ORDER CONFIRMATION ================== */
