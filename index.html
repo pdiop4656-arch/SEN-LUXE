@@ -524,6 +524,37 @@
   }
   .qv-copylink:hover{color:var(--gold);}
 
+  /* ---------- order form fields ---------- */
+  .form-grid{display:flex;flex-direction:column;gap:18px;}
+  .form-field label{
+    display:block;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--text-mute);margin-bottom:8px;font-weight:500;
+  }
+  .form-field label .req{color:var(--gold-bright);}
+  .form-field label .opt{text-transform:none;letter-spacing:0;color:#b7b2a8;font-size:11px;}
+  .form-field input,
+  .form-field textarea{
+    width:100%;box-sizing:border-box;
+    padding:13px 15px;border:1px solid var(--line);border-radius:5px;
+    font-family:'Jost',sans-serif;font-size:14.5px;color:var(--black);
+    background:var(--white);transition:border-color .25s ease, box-shadow .25s ease;
+  }
+  .form-field textarea{resize:vertical;min-height:76px;}
+  .form-field input::placeholder,
+  .form-field textarea::placeholder{color:#bcb8ae;}
+  .form-field input:focus,
+  .form-field textarea:focus{
+    outline:none;border-color:var(--gold-bright);
+    box-shadow:0 0 0 3px rgba(212,175,55,0.14);
+  }
+  .form-field input:invalid:not(:placeholder-shown){border-color:#c96b6b;}
+  .form-field.has-error input,
+  .form-field.has-error textarea{border-color:#c14b4b;}
+  .field-error{
+    display:none;color:#a83232;font-size:11.5px;margin:7px 2px 0;letter-spacing:0.01em;
+  }
+  .form-field.has-error .field-error{display:block;}
+
   .delivery-option{
     display:flex;align-items:center;justify-content:space-between;
     padding:14px 16px;border:1px solid var(--line);cursor:pointer;
@@ -953,13 +984,27 @@
       <h2 style="margin-bottom:6px;">Votre commande</h2>
       <p style="font-size:12.5px;color:var(--text-mute);margin-bottom:26px;">Sous-total produits : <strong id="orderSubtotal">0 FCFA</strong></p>
 
-      <form id="orderForm" onsubmit="submitOrder(event)">
-        <div style="display:flex;flex-direction:column;gap:16px;">
-          <input required name="nom" placeholder="Nom" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="prenom" placeholder="Prénom" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="phone" placeholder="Téléphone" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <input required name="address" placeholder="Adresse de livraison" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;">
-          <textarea name="comment" placeholder="Commentaire (facultatif)" rows="3" style="padding:13px 4px;border:none;border-bottom:1px solid var(--line);font-family:'Jost';font-size:14px;resize:vertical;"></textarea>
+      <form id="orderForm" onsubmit="submitOrder(event)" novalidate>
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="ofFullname">Nom et prénom <span class="req">*</span></label>
+            <input required id="ofFullname" name="fullname" type="text" autocomplete="name">
+            <p class="field-error" id="err-fullname"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofPhone">Téléphone <span class="req">*</span></label>
+            <input required id="ofPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" oninput="this.value=this.value.replace(/[^0-9+\s]/g,'')">
+            <p class="field-error" id="err-phone"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofAddress">Adresse de livraison <span class="req">*</span></label>
+            <input required id="ofAddress" name="address" type="text" autocomplete="address-line1">
+            <p class="field-error" id="err-address"></p>
+          </div>
+          <div class="form-field">
+            <label for="ofComment">Commentaire <span class="opt">(facultatif)</span></label>
+            <textarea id="ofComment" name="comment" rows="4"></textarea>
+          </div>
         </div>
 
         <div style="margin-top:26px;">
@@ -1569,6 +1614,9 @@ function openOrderForm(){
   if(cart.length===0){ showToast('Votre panier est vide'); return; }
   resetDeliverySelection();
   updateOrderTotals();
+  const form = document.getElementById('orderForm');
+  form.reset();
+  clearFieldErrors(form);
   document.getElementById('orderOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1576,6 +1624,9 @@ function openOrderFormDirect(item){
   directOrder = [item];
   resetDeliverySelection();
   updateOrderTotals();
+  const form = document.getElementById('orderForm');
+  form.reset();
+  clearFieldErrors(form);
   document.getElementById('orderOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -1594,9 +1645,9 @@ function closeOrderForm(){
       -> copiez le Template ID
    4) Récupérez votre Public Key dans Account > General
    5) Remplacez les 3 valeurs ci-dessous */
-const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+const EMAILJS_PUBLIC_KEY  = 'E5M3KCwdjD887-7GP';
+const EMAILJS_SERVICE_ID  = 'service_wsgv1ij';
+const EMAILJS_TEMPLATE_ID = 'template_5q6ittg';
 if(window.emailjs && EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY'){
   emailjs.init({publicKey: EMAILJS_PUBLIC_KEY});
 }
@@ -1641,7 +1692,8 @@ function buildOrderEmailHtml(data){
       <td style="background:#0a0a0a;padding:32px 32px 26px;text-align:center;">
         <div style="color:#d4af37;font-size:11px;letter-spacing:4px;text-transform:uppercase;margin-bottom:8px;">SEN LUXE</div>
         <div style="color:#ffffff;font-size:24px;font-weight:700;letter-spacing:0.3px;">Nouvelle commande</div>
-        <div style="color:#999;font-size:11.5px;margin-top:10px;">Reçue le ${data.orderDate}</div>
+        <div style="color:#d4af37;font-size:12px;margin-top:8px;font-weight:600;">N° ${data.orderNumber}</div>
+        <div style="color:#999;font-size:11.5px;margin-top:6px;">Reçue le ${data.orderDate}</div>
       </td>
     </tr>
     <tr>
@@ -1680,12 +1732,8 @@ function buildOrderEmailHtml(data){
         <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b8935f;font-weight:bold;margin-bottom:14px;">Informations du client</div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#faf9f6;border-radius:6px;overflow:hidden;">
           <tr>
-            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;width:38%;border-bottom:1px solid #eee;">Nom</td>
-            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.nom}</td>
-          </tr>
-          <tr>
-            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Prénom</td>
-            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.prenom}</td>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;width:38%;border-bottom:1px solid #eee;">Nom et prénom</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.fullname}</td>
           </tr>
           <tr>
             <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Téléphone</td>
@@ -1694,6 +1742,10 @@ function buildOrderEmailHtml(data){
           <tr>
             <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Adresse</td>
             <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.address}</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;border-bottom:1px solid #eee;">Livraison</td>
+            <td style="padding:12px 16px;font-size:14px;color:#0a0a0a;font-weight:600;border-bottom:1px solid #eee;">${data.deliveryOption}</td>
           </tr>
           <tr>
             <td style="padding:12px 16px;font-size:11.5px;letter-spacing:0.5px;text-transform:uppercase;color:#999;">Commentaire</td>
@@ -1712,8 +1764,42 @@ function buildOrderEmailHtml(data){
 </div>`;
 }
 
+function clearFieldErrors(form){
+  form.querySelectorAll('.form-field').forEach(el=>el.classList.remove('has-error'));
+}
+function showFieldError(fieldId, message){
+  const field = document.getElementById(fieldId).closest('.form-field');
+  field.classList.add('has-error');
+  document.getElementById('err-'+fieldId.replace('of','').toLowerCase()).textContent = message;
+}
+function validateOrderForm(f){
+  clearFieldErrors(f);
+  let ok = true;
+  const req = [
+    {id:'ofFullname', val:f.fullname.value.trim(), msg:'Merci de renseigner votre nom et prénom.'},
+    {id:'ofAddress', val:f.address.value.trim(), msg:'Merci de renseigner votre adresse.'},
+  ];
+  req.forEach(r=>{ if(!r.val){ showFieldError(r.id, r.msg); ok = false; } });
+
+  const phoneVal = f.phone.value.trim();
+  const phoneDigits = phoneVal.replace(/[^0-9]/g,'');
+  if(!phoneVal){
+    showFieldError('ofPhone', 'Merci de renseigner votre numéro de téléphone.');
+    ok = false;
+  } else if(phoneDigits.length < 9){
+    showFieldError('ofPhone', 'Ce numéro semble incomplet — vérifiez le format.');
+    ok = false;
+  }
+  return ok;
+}
 function submitOrder(e){
   e.preventDefault();
+
+  const f = e.target;
+  if(!validateOrderForm(f)){
+    showToast('Merci de corriger les champs indiqués en rouge.');
+    return;
+  }
 
   if(!deliveryOption){
     document.getElementById('deliveryWarning').style.display = 'block';
@@ -1721,9 +1807,10 @@ function submitOrder(e){
     return;
   }
 
-  const f = e.target;
-  const nom = f.nom.value.trim();
-  const prenom = f.prenom.value.trim();
+  const fullname = f.fullname.value.trim();
+  const spaceIdx = fullname.indexOf(' ');
+  const prenom = spaceIdx === -1 ? fullname : fullname.slice(0, spaceIdx);
+  const nom = spaceIdx === -1 ? '' : fullname.slice(spaceIdx + 1);
   const phone = f.phone.value.trim();
   const address = f.address.value.trim();
   const comment = f.comment.value.trim();
@@ -1732,13 +1819,15 @@ function submitOrder(e){
   const subtotal = orderProductsSubtotal();
   const deliveryFee = DELIVERY_PRICES[deliveryOption];
   const total = subtotal + deliveryFee;
+  const orderNumber = 'SL-' + Date.now().toString().slice(-8);
 
   const templateParams = {
     to_email: ORDER_EMAIL,
-    email_subject: `Nouvelle commande SEN LUXE — ${prenom} ${nom}`,
+    email_subject: `Nouvelle commande SEN LUXE — ${fullname} (${orderNumber})`,
     email_body: buildOrderEmailHtml({
+      orderNumber,
       orderDate: new Date().toLocaleString('fr-FR', {dateStyle:'long', timeStyle:'short'}),
-      nom, prenom, phone, address, comment,
+      fullname, nom, prenom, phone, address, comment,
       deliveryOption: DELIVERY_LABELS[deliveryOption],
       deliveryFee: fmt(deliveryFee),
       subtotal: fmt(subtotal),
